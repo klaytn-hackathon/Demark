@@ -147,6 +147,8 @@ let SubBuyToken = injectIntl(React.createClass({
         const accounts = await ICO.getAccount();
         var value;
         if((nowInt>=startPreOrder&&nowInt<=endPreOrder)){
+          if(this.state.amount<this.props.minimumQuantity) 
+            alert('amount need greater than minimum quantity')
           value = this.props.preOrderPrice*this.state.amount;
           await ICO.buyTokenForICO(accounts,this.state.amount,value);
         }
