@@ -286,11 +286,11 @@ let ContractICODetail = injectIntl(React.createClass({
                                     <div className="col-md-2">
                                         <div className="panel panel-default">
                                             <div className="panel-heading">
-                                                <h3 className="panel-title" style={{ fontSize: '12px', textAlign: 'center' }}>Limited</h3>
+                                                <h3 className="panel-title" style={{ fontSize: '12px', textAlign: 'center' }}>Minimum</h3>
                                             </div>
                                             <div className="panel-body">
                                                 <div className="container-fluid">
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.limitedToken}</span>
+                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.minimumQuantity}</span>
                                                 </div>
                                             </div>
                                         </div>
