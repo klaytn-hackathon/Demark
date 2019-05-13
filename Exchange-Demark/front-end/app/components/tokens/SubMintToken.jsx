@@ -4,11 +4,11 @@ import { Button, Input } from 'react-bootstrap';
 
 import 'babel-polyfill';
 
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../ConfirmModal';
 
-import contractService from '../clients/contractService';
+import contractService from '../../clients/contractService';
 
-let SubSend = injectIntl(React.createClass({
+let SubMintToken = injectIntl(React.createClass({
 
   getInitialState() {
     return {
@@ -19,7 +19,9 @@ let SubSend = injectIntl(React.createClass({
       confirmMessage: null,
       errorMessage: "",
       successMessage: "",
-      loading: false
+      loading: false,
+      tokenAmount: null,
+      tokenAddress: null
     };
   },
 
@@ -45,32 +47,26 @@ let SubSend = injectIntl(React.createClass({
   validate(e, showAlerts) {
     e.preventDefault();
 
-    var address = this.refs.address.getValue().trim();
-    var amount = this.refs.amount.getValue().trim();
+    var tokenAddress = this.refs.tokenAddress.getValue().trim();
+    var tokenAmount = this.refs.tokenAmount.getValue().trim();
 
     this.setState({
-      recipient: address,
-      amount: amount
+      tokenAddress: tokenAddress,
+      tokenAmount: tokenAmount
     });
 
-    if (!address) {
+
+    if (!tokenAddress) {
       this.props.setAlert('warning', this.props.intl.formatMessage({ id: 'form.empty' }));
     }
-    else if (!amount) {
+    else if (!tokenAmount) {
       this.props.setAlert('warning', this.props.intl.formatMessage({ id: 'form.cheap' }));
     }
-    else if (parseFloat(amount) > this.props.balance) {
-      this.props.setAlert('warning',
-        this.props.intl.formatMessage({ id: 'sub.not_enough' }, {
-          currency: this.props.contractName,
-          balance: this.props.balance
-        })
-      );
-    }
-    else if (address.length != 42) {
+
+    else if (tokenAddress.length != 42) {
       this.props.setAlert('warning',
         this.props.intl.formatMessage({ id: 'address.size' }, {
-          size: (address.length < 42 ? "short" : "long")
+          size: (tokenAddress.length < 42 ? "short" : "long")
         })
       );
     }
@@ -78,10 +74,9 @@ let SubSend = injectIntl(React.createClass({
       this.setState({
         newSend: true,
         confirmMessage:
-          <FormattedMessage id='sub.send' values={{
-            amount: this.state.amount,
-            currency: this.props.contractName,
-            recipient: this.state.recipient
+          <FormattedMessage id='form.mint' values={{
+            tokenAmount: this.state.tokenAmount,
+            tokenAddress: this.state.tokenAddress
           }}
           />
       });
@@ -101,58 +96,47 @@ let SubSend = injectIntl(React.createClass({
     return false;
   },
 
-  async onSubmitTransfer(e) {
+  async onMintToken(e) {
     e.preventDefault();
-    
-    // if (!this.validate(e, el))
-    //   return false;
-
     this.setState({ loading: true, errorMessage: "" });
 
     try {
-      let accounts = await this.props.dtuInstance.getAccount();
-
-      await this.props.dtuInstance.sendToken(accounts, this.state.recipient, this.state.amount);
-
+      let account = await this.props.tokenIcoInstance.getAccount();
+      await this.props.tokenIcoInstance.mint(account, this.state.tokenAddress, this.state.tokenAmount);
       this.setState({
         loading: false,
         successMessage: "Success! Your transcation has been sent."
       });
-      // setTimeout(() => {
-      //   window.location.reload();
-      // }, 1500);
     } catch (err) {
-        this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
+      console.log("in hereeee");
+
+      this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
     }
-
     this.setState({
-      recipient: null,
-      amount: null
+      tokenAmount: null,
+      tokenAddress: null
     });
-
   },
-  
+
   render() {
     return (
       <form className="form-horizontal" role="form" onSubmit={this.handleValidation} >
-        <Input type="text" ref="address"
+        <Input type="text" ref="tokenAddress"
           placeholder="0x"
           label={<FormattedMessage id='form.recipient' />} labelClassName="sr-only"
           maxLength="42" pattern="0x[a-fA-F\d]+"
           onChange={this.handleChange}
-          value={this.state.recipient || ""} />
+          value={this.state.tokenAddress} />
 
-        <Input type="number" ref="amount"
+        <Input type="number" ref="tokenAmount"
           label={<FormattedMessage id='form.amount' />} labelClassName="sr-only"
-          // min={this.props.market.amountPrecision}
-          // step={this.props.market.amountPrecision}
           placeholder="10.0000"
           onChange={this.handleChange}
-          value={this.state.amount || ""} />
+          value={this.state.tokenAmount} />
 
         <div className="form-group">
           <Button className={"btn-block" + (this.state.newSend ? " btn-primary" : "")} type="submit" key="send">
-            <FormattedMessage id='send.send' />
+            <FormattedMessage id='form.mint' />
           </Button>
         </div>
 
@@ -161,11 +145,11 @@ let SubSend = injectIntl(React.createClass({
           onHide={this.closeModal}
           message={this.state.confirmMessage}
           flux={this.props.flux}
-          onSubmit={this.onSubmitTransfer}
+          onSubmit={this.onMintToken}
         />
       </form>
     );
   }
 }));
 
-module.exports = SubSend;
+module.exports = SubMintToken;

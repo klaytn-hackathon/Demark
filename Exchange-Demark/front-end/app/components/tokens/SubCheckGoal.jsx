@@ -17,8 +17,8 @@ let SubCheckGoal = injectIntl(React.createClass({
       recipient: null,
       newWithdrawal: false,
       showModal: false,
-      confirmMessage: null,
-      contractAddress: this.props.contractAddress
+      confirmMessage: null
+    //   contractAddress: this.props.contractAddress
     };
   },
 
@@ -95,13 +95,13 @@ let SubCheckGoal = injectIntl(React.createClass({
     var nowInt = Date.parse(now);
     var endOrder = Date.parse(this.props.endOrder);
     if(nowInt<=endOrder){
-      alert('yyyyyyy')
+      alert('This ICO have not finished yet')
     }
     else{
-      ICO = new contractService.ICOContract(this.state.contractAddress);
+    //   ICO = new contractService.ICOContract(this.state.contractAddress);
       try {
-        const accounts = await ICO.getAccount();
-        await ICO.checkGoalReached(accounts);
+        let accounts = await this.props.icoInstance.getAccount();
+        await this.props.icoInstance.checkGoalReached(accounts);
       } catch (err) {
           this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
       }

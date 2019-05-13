@@ -8,7 +8,6 @@ import contractService from '../../clients/contractService';
 
 // const contractAddress = "0x9541ee8a0d873055b1951037db437374c1999323";
 var now = new Date();
-let ICO;
 
 let SubWithDrawToken = injectIntl(React.createClass({
   getInitialState: function() {
@@ -18,7 +17,7 @@ let SubWithDrawToken = injectIntl(React.createClass({
       newWithdrawal: false,
       showModal: false,
       confirmMessage: null,
-      contractAddress: this.props.contractAddress
+      // contractAddress: this.props.contractAddress
     };
   },
 
@@ -95,13 +94,13 @@ let SubWithDrawToken = injectIntl(React.createClass({
     var nowInt = Date.parse(now);
     var endOrder = Date.parse(this.props.endOrder);
     if(nowInt<=endOrder){
-      alert('yyyyyyy')
+      alert('This ICO have not finished yet')
     }
     else{
-      ICO = new contractService.ICOContract(this.state.contractAddress);
+      // ICO = new contractService.ICOContract(this.state.contractAddress);
       try {
-        const accounts = await ICO.getAccount();
-        await ICO.safeWithdraw(accounts);
+        let accounts = await this.props.icoInstance.getAccount();
+        await this.props.icoInstance.safeWithdraw(accounts);
       } catch (err) {
           this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
       }

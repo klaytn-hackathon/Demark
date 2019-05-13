@@ -1,15 +1,14 @@
 import React from 'react';
 import { injectIntl, FormattedMessage } from 'react-intl';
 import { Input, Button } from 'react-bootstrap';
-
+import { Tabs, Tab } from 'react-bootstrap';
 import Progress from "react-progress-2";
 
 import firebase from 'firebase'
 import contractService from '../../clients/contractService';
-
-const contractAddress = "0x9541ee8a0d873055b1951037db437374c1999323";
-
-let TokenICO = new contractService.TokenICOContract(contractAddress);
+import SubMintToken from './SubMintToken';
+// const contractAddress = "0x9541ee8a0d873055b1951037db437374c1999323";
+import AlertDismissable from '../AlertDismissable';
 
 let ICODetail = injectIntl(React.createClass({
 
@@ -20,9 +19,10 @@ let ICODetail = injectIntl(React.createClass({
             alertMessage: '',
             accounts: '',
             contractName: '',
-            tokenAmount: '',
-            tokenAddress: ''
-            // tokenICOInstance: contractService.DTUContract(contractAddress)
+            tokenAmount: null,
+            addressTokenICO: null,
+            tokenIcoInstance: null,
+            toICOAddress:null
         };
     },
 
@@ -31,19 +31,32 @@ let ICODetail = injectIntl(React.createClass({
     },
 
     async componentDidMount() {
-        // TODO smooth / less hackish scroll to ticketId
-        // if (this.props.params.ticketId && this.refs["ticket-" + this.props.params.ticketId]) {
-        //     var ticketOffset = this.refs["ticket-" + this.props.params.ticketId].offsetTop;
-        //     window.scroll(0, ticketOffset);
-        // }
         await this.readTokenIcoFromDtbs();
-        // try {
-        //     console.log('====================================')
-        //     console.log("Test")
-        //     console.log('====================================')
-        // } catch (err) {
-        //     this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
-        // }
+        this.props.flux.actions.config.updateAlertCount(null);
+        let tokenIcoInstance = new contractService.TokenICOContract(this.state.addressTokenICO);
+        try {
+            this.setState({
+                tokenIcoInstance: tokenIcoInstance
+            });
+        } catch (err) {
+            this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
+        }
+    },
+
+    async readTokenIcoFromDtbs() {
+        console.log(this.props.params.tokenicoId);
+        var databaseRef = firebase.database().ref("/tokens_ico/" + this.props.params.tokenicoId);
+        var item;
+        await databaseRef.once('value', function (snapshot) {
+            item = snapshot.val();
+        });
+
+        let addressFromDB = await item.address;
+
+        this.setState({
+            tokenIco: item,
+            addressTokenICO: addressFromDB
+        });
     },
 
     setAlert(alertLevel, alertMessage) {
@@ -57,44 +70,44 @@ let ICODetail = injectIntl(React.createClass({
         this.refs.alerts.setState({ alertVisible: show });
     },
 
-    notification(currState) {
-        if (currState < 0) {
-            return (
-                <div className="panel panel-default">
-                    <div className="panel-heading">
-                        <p className="panel-title">Contract out of money</p>
+    mint() {
+        return (
+            <div className="panel panel-default">
+                <div className="panel-heading">
+                    <h3 className="panel-title">
+                        <FormattedMessage id='form.mint' values={{ currency: "ETH" }} />
+                    </h3>
+                </div>
+                <div className="panel-body">
+                    <div className="container-fluid">
+                        <SubMintToken
+                            tokenIcoInstance={this.state.tokenIcoInstance}
+                            // accounts={this.state.accounts}
+                            setAlert={this.setAlert}
+                            showAlert={this.showAlert} 
+                            />
                     </div>
                 </div>
-            )
-        }
+            </div>
+        );
     },
 
-    async readTokenIcoFromDtbs() {
-        console.log(this.props.params.tokenicoId);
-        var databaseRef = firebase.database().ref("/tokens_ico/" + this.props.params.tokenicoId);
-        var item;
-        await databaseRef.once('value', function (snapshot) {
-            item = snapshot.val();
-        });
-        this.setState({
-            tokenIco: item
-        });
-        console.log(item);
-    },
-    
-    async onMintToken(e) {
-        e.preventDefault();
-        try {
-            const account = await TokenICO.getAccount();
-            await TokenICO.mint(account, this.state.tokenAddress, this.state.tokenAmount);
-          } catch (err) {
-              this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
-          }
-          this.setState({
-            tokenAmount: null,
-            tokenAddress: null
-          });
-    },
+    // async onMintToken(e) {
+    //     e.preventDefault();
+    //     let toICO = this.state.toICOAddress;
+    //     let toAmount = this.state.tokenAmount;
+    //     try {
+    //         let account = await this.state.tokenIcoInstance.getAccount();
+    //         console.log(account, toICO, toAmount);
+    //         await this.state.tokenIcoInstance.mint(account, toICO, toAmount);
+    //     } catch (err) {
+    //         this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
+    //     }
+    //     this.setState({
+    //         tokenAmount: null,
+    //         tokenAddress: null
+    //     });
+    // },
 
     render() {
         return (
@@ -105,6 +118,7 @@ let ICODetail = injectIntl(React.createClass({
                     <div className="container">
                         {/* For mint token */}
                         <div className="row">
+                        <AlertDismissable ref="alerts" level={this.state.alertLevel} message={this.state.alertMessage} />
                             {/* ----------- ICO TOKEN DETAIL ----------- */}
                             <div className="col-md-6">
                                 <h1>TOKEN ICO</h1>
@@ -161,32 +175,14 @@ let ICODetail = injectIntl(React.createClass({
                                     </div>
                                 </div>
                             </div>
-                        
+
                             {/* ----------- To mint token ----------- */}
                             <div className="col-md-6">
-                                <form className="form-horizontal" role="form" onSubmit={this.onMintToken} >
-
-                                    <h2>TO MINT TOKEN</h2>
-                                    <Input type="number" ref="amount"
-                                        placeholder="10"
-                                        label="Amount" labelClassName="sr-only"
-                                        value={this.state.amount}
-                                        />
-                                    
-                                    <Input type="text" ref="address"
-                                        placeholder="0xa75b2d7b277919c224b198743c88efe608ba8c1e"
-                                        label="To Address" labelClassName="sr-only"
-                                        value={this.state.address}
-                                        />
-
-                                    <div className="form-group">
-                                        <Button className={"btn-block" + (this.state.newWithdrawal ? " btn-primary" : "")} type="submit" key="toaddress">
-                                            <FormattedMessage id='form.mint' />
-                                        </Button>
-                                    </div>
-                                </form>
-
+                                
+                                {this.mint()}
                             </div>
+                            {/* ----------- end mint token ----------- */}
+
                         </div>
                     </div>
                 </div>

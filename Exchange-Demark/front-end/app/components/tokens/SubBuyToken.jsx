@@ -11,9 +11,9 @@ let fixtures = require("../../js/fixtures");
 
 import contractService from '../../clients/contractService';
 
-const contractAddress = "0x9541ee8a0d873055b1951037db437374c1999323";
+// const contractAddress = "0x9541ee8a0d873055b1951037db437374c1999323";
 
-let ICO = new contractService.ICOContract(contractAddress);
+// let ICO = new contractService.ICOContract(contractAddress);
 
 var now = new Date();
 
@@ -141,29 +141,27 @@ let SubBuyToken = injectIntl(React.createClass({
     var startOrder = Date.parse(this.props.startOrder);
     var endOrder = Date.parse(this.props.endOrder);
     if(nowInt < startPreOrder || nowInt > endOrder || (nowInt>endPreOrder&&nowInt<startOrder)){
-      alert('yyyyyyy')
+      alert('Cant buy now')
     } else  {
       try {
-        const accounts = await ICO.getAccount();
+        let accounts = await this.props.icoInstance.getAccount();
         var value;
         if((nowInt>=startPreOrder&&nowInt<=endPreOrder)){
           if(this.state.amount<this.props.minimumQuantity) 
             alert('amount need greater than minimum quantity')
           value = this.props.preOrderPrice*this.state.amount;
-          await ICO.buyTokenForICO(accounts,this.state.amount,value);
+          await this.props.icoInstance.buyTokenForICO(accounts,this.state.amount,value);
         }
         else{
           value = this.props.orderPrice*this.state.amount;
-          await ICO.buyTokenForICO(accounts,this.state.amount,value);
+          await this.props.icoInstance.buyTokenForICO(accounts,this.state.amount,value);
         }
         
-  
       } catch (err) {
           this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
       }
     }
     
-
     this.setState({
       amount: null
     });

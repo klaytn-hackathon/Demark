@@ -4,11 +4,11 @@ const DTUAbi = readByteCode.getAbiDTUToken();
 const ICOAbi = readByteCode.getAbiContractICO();
 const TokenICOAbi = readByteCode.getAbiTokenICO();
 
-const _buyToken = async (_instance, _currentAcc, _amount,_value) => {
+const _buyToken = async (_instance, _currentAcc, _amount, _value) => {
     return new Promise((resolve, reject) => {
-        _instance.buyToken.sendTransaction(_amount,{
-            from : _currentAcc,
-            value : _value * 1000000000000000000
+        _instance.buyToken.sendTransaction(_amount, {
+            from: _currentAcc,
+            value: _value * 1000000000000000000
         }, (err, data) => {
             if (err) reject(err);
             resolve(data);
@@ -16,11 +16,36 @@ const _buyToken = async (_instance, _currentAcc, _amount,_value) => {
     });
 }
 
-const _buyTokenForICO = async (_instance, _currentAcc, _amount,_value) => {
+const _mint = async (_instance, _currentAcc, _to, _amount) => {
     return new Promise((resolve, reject) => {
-        _instance.buyCoin.sendTransaction(_amount,{
-            from : _currentAcc,
-            value : _value * 1000000000000000000
+        
+        _instance.mint.sendTransaction(_to, _amount, {
+            from: _currentAcc
+        }, (err, data) => {
+            if (err) reject(err);
+            resolve(data);
+        });
+    });
+}
+
+
+//send token to a specific address
+const _sendToken = async (_instance, _currentAcc, _to, _amount) => {
+    return new Promise((resolve, reject) => {
+        _instance.transfer.sendTransaction(_to, _amount, {
+            from: _currentAcc
+        }, (err, data) => {
+            if (err) reject(err);
+            resolve(data);
+        });
+    });
+}
+
+const _buyTokenForICO = async (_instance, _currentAcc, _amount, _value) => {
+    return new Promise((resolve, reject) => {
+        _instance.buyCoin.sendTransaction(_amount, {
+            from: _currentAcc,
+            value: _value * 1000000000000000000
         }, (err, data) => {
             if (err) reject(err);
             resolve(data);
@@ -31,7 +56,7 @@ const _buyTokenForICO = async (_instance, _currentAcc, _amount,_value) => {
 const _safeWithdraw = async (_instance, _currentAcc) => {
     return new Promise((resolve, reject) => {
         _instance.safeWithdrawal.sendTransaction({
-            from : _currentAcc
+            from: _currentAcc
         }, (err, data) => {
             if (err) reject(err);
             resolve(data);
@@ -42,30 +67,6 @@ const _safeWithdraw = async (_instance, _currentAcc) => {
 const _checkGoalReached = async (_instance, _currentAcc) => {
     return new Promise((resolve, reject) => {
         _instance.checkGoalReached.sendTransaction({
-            from : _currentAcc
-        }, (err, data) => {
-            if (err) reject(err);
-            resolve(data);
-        });
-    });
-}
-
-
-const _mint = async (_instance, _currentAcc, _to,_amount) => {
-    return new Promise((resolve, reject) => {
-        _instance.mint.sendTransaction( _to,_amount,{
-            from : _currentAcc
-        }, (err, data) => {
-            if (err) reject(err);
-            resolve(data);
-        });
-    });
-}
-
-//send token to a specific address
-const _sendToken = async (_instance, _currentAcc, _to, _amount) => {
-    return new Promise((resolve, reject) => {
-        _instance.transfer.sendTransaction(_to,_amount, {
             from: _currentAcc
         }, (err, data) => {
             if (err) reject(err);
@@ -73,6 +74,10 @@ const _sendToken = async (_instance, _currentAcc, _to, _amount) => {
         });
     });
 }
+
+
+
+
 //burn token , get eth back
 const _burn = async (_instance, _currentAcc, _amount) => {
     return new Promise((resolve, reject) => {
@@ -105,12 +110,79 @@ const _getState = async (_instance) => {
     });
 }
 
+
+const _getClosed = async (_instance) => {
+    return new Promise((resolve, reject) => {
+        _instance.isClosed.call((err, data) => {
+            if (err) reject(err);
+            resolve(data);
+        });
+    });
+}
+
+const _getSuccessStatus = async (_instance) => {
+    return new Promise((resolve, reject) => {
+        _instance.isReachedGoal.call((err, data) => {
+            if (err) reject(err);
+            resolve(data);
+        });
+    });
+}
+
+const _getUserBalance = async (_instance,_account) => {
+    return new Promise((resolve, reject) => {
+        _instance.amountOf.call(_account,(err, data) => {
+            if (err) reject(err);
+            resolve(data.c[0]);
+        });
+    });
+}
+
+
+const _getTokenRemain = async (_instance) => {
+    return new Promise((resolve, reject) => {
+        _instance.tokenRemaining.call((err, data) => {
+            if (err) reject(err);
+            resolve(data.c[0]);
+        });
+    });
+}
+
+const _getTokenRemainInPre = async (_instance) => {
+    return new Promise((resolve, reject) => {
+        _instance.tokenRemainingInPre.call((err, data) => {
+            if (err) reject(err);
+            resolve(data.c[0]);
+        });
+    });
+}
+
+
+const _getTokenSoldInPre = async (_instance) => {
+    return new Promise((resolve, reject) => {
+        _instance.tokenSoldInPre.call((err, data) => {
+            if (err) reject(err);
+            resolve(data.c[0]);
+        });
+    });
+}
+
+const _getTokenSoldInOrder = async (_instance) => {
+    return new Promise((resolve, reject) => {
+        _instance.tokenSoldAfterPre.call((err, data) => {
+            if (err) reject(err);
+            resolve(data.c[0]);
+        });
+    });
+}
+
+
 //deposit eth to contract
 const _deposit = async (_instance, _currentAcc, _amount) => {
-    return new Promise((resolve, reject) => { 
+    return new Promise((resolve, reject) => {
         _instance.deposit.sendTransaction({
-            from : _currentAcc,
-            value : _amount * 1000000000000000000
+            from: _currentAcc,
+            value: _amount * 1000000000000000000
         }, (err, data) => {
             if (err) reject(err);
             resolve(data);
@@ -128,9 +200,9 @@ const getMetaAccounts = async () => {
 }
 const _getWalletBalance = async (address) => {
     return new Promise((resolve, reject) => {
-        web3.eth.getBalance(address,(err, balance) => {
+        web3.eth.getBalance(address, (err, balance) => {
             if (err) reject(err);
-            resolve(balance.toNumber()/1000000000000000000);
+            resolve(balance.toNumber() / 1000000000000000000);
         })
     });
 }
@@ -358,7 +430,7 @@ const _getYourReward = async (_instance, _address) => {
     });
 }
 
-class ICOContract{
+class ICOContract {
     constructor(_address) {
         this.address = _address;
         this.instance = web3.eth.contract(ICOAbi).at(_address);
@@ -372,16 +444,35 @@ class ICOContract{
         return this.instance;
     }
 
-    buyTokenForICO(_currentAcc, _amount,_value) {
-        _buyTokenForICO(this.instance, _currentAcc, _amount,_value);
+    buyTokenForICO(_currentAcc, _amount, _value) {
+        _buyTokenForICO(this.instance, _currentAcc, _amount, _value);
     }
 
     safeWithdraw(_currentAcc) {
         _safeWithdraw(this.instance, _currentAcc);
     }
 
+    getClosed() {
+        return _getClosed(this.instance);
+    }
+
+    getSuccessStatus() {
+        return _getSuccessStatus(this.instance);
+    }
+
+    getUserBalance(_currentAcc) {
+        return _getUserBalance(this.instance, _currentAcc);
+    }
+
     checkGoalReached(_currentAcc) {
         _checkGoalReached(this.instance, _currentAcc);
+    }
+
+    getTokenSoldInPre() {
+        return _getTokenSoldInPre(this.instance);
+    }
+    getTokenSoldInOrder() {
+        return _getTokenSoldInOrder(this.instance);
     }
 
     getPreOrderBasePrice() {
@@ -398,7 +489,7 @@ class ICOContract{
 
     getLimitedPreOrderSize() {
         return _getLimitedPreOrderSize(this.instance);
-    } 
+    }
 
     getAmountPreOrder() {
         return _getAmountPreOrder(this.instance);
@@ -428,9 +519,17 @@ class ICOContract{
         return getMetaAccounts();
     }
 
+    getTokenRemain() {
+        return _getTokenRemain(this.instance);
+    }
+
+    getTokenRemainInPre() {
+        return _getTokenRemainInPre(this.instance);
+    }
 }
 
-class TokenICOContract{
+class TokenICOContract {
+    
     constructor(_address) {
         this.address = _address;
         this.instance = web3.eth.contract(TokenICOAbi).at(_address);
@@ -464,15 +563,14 @@ class TokenICOContract{
         return getMetaAccounts();
     }
 
-    mint(_currentAcc,_to, _amount) {
-        _mint(this.instance, _currentAcc, _to,_amount);
+    mint(_currentAcc, _to, _amount) {
+        _mint(this.instance, _currentAcc, _to, _amount);
     }
 }
 
 class DTUContract {
     constructor(_address) {
         this.address = _address;
-        // this.instance = new web3.eth.Contract(DTUAbi, _address);
         this.instance = web3.eth.contract(DTUAbi).at(_address);
     }
     getAddress() {
@@ -481,8 +579,8 @@ class DTUContract {
     getInstance() {
         return this.instance;
     }
-    buyToken(_currentAcc,_amount, _value) {
-        _buyToken(this.instance, _currentAcc, _amount,_value);
+    buyToken(_currentAcc, _amount, _value) {
+        _buyToken(this.instance, _currentAcc, _amount, _value);
     }
     sendToken(_currentAcc, _to, _amount) {
         _sendToken(this.instance, _currentAcc, _to, _amount);
@@ -539,8 +637,8 @@ class DTUContract {
         return _getWalletBalance(_address);
     }
     getYourBonus(_address) {
-        return _getYourBonus(this.instance,_address);
+        return _getYourBonus(this.instance, _address);
     }
 }
 
-module.exports = {DTUContract,TokenICOContract,ICOContract};
+module.exports = { DTUContract, TokenICOContract, ICOContract };

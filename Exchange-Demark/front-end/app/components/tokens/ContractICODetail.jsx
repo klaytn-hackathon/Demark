@@ -17,9 +17,7 @@ let contractAddress;
 import contractService from '../../clients/contractService';
 // import { log } from 'util';
 
-// const contractAddress = "0x9541ee8a0d873055b1951037db437374c1999323";
-
-let ICO;
+let icoAddress;
 
 let ContractICODetail = injectIntl(React.createClass({
 
@@ -41,15 +39,18 @@ let ContractICODetail = injectIntl(React.createClass({
             endPreOrder: '',
             startOrder: '',
             endOrder: '',
-            addressICO: '',
             preOrderPrice: '',
             orderPrice: '',
             minimumQuantity: '',
-            contractAddress: '',
-            days: 0,
-            hours: 0,
-            min: 0,
-            sec: 0
+            tokenAddressLink: '',
+            icoAddress: icoAddress,
+            icoInstance: '',
+            tokenUsedName: '',
+            tokenUsedSymbol: '',
+            isSuccess: '',
+            userBalance: '',
+            amountRemainInPre: '',
+            amountRemain: ''
         };
     },
 
@@ -58,88 +59,54 @@ let ContractICODetail = injectIntl(React.createClass({
     },
 
     async componentDidMount() {
+        await this.readFromDtbsToTable();
         this.props.flux.actions.config.updateAlertCount(null);
-        // this.setState({
-            contractAddress = this.props.params.contracticoId
-        // });
-        // contractAddress = this.props.params.contracticoId;
-        this.setState({
-            contractAddress: contractAddress
-        });
-        ICO = new contractService.ICOContract(contractAddress);
-        this.readFromDtbsToTable();
-
-        this.interval = setInterval(() => {
-            const date = this.calculateCountdown(this.props.date);
-            date ? this.setState(date) : this.stop();
-          }, 1000);
-    },
-
-    componentWillUnmount() {
-        this.stop();
-    },
-
-    calculateCountdown(endDate) {
-        let diff = (Date.parse(new Date(endDate)) - Date.parse(new Date())) / 1000;
-    
-        // clear countdown when date is reached
-        if (diff <= 0) return false;
-    
-        const timeLeft = {
-          years: 0,
-          days: 0,
-          hours: 0,
-          min: 0,
-          sec: 0,
-          millisec: 0
-        };
-    
-        // calculate time difference between now and expected date
-        if (diff >= (365.25 * 86400)) { // 365.25 * 24 * 60 * 60
-          timeLeft.years = Math.floor(diff / (365.25 * 86400));
-          diff -= timeLeft.years * 365.25 * 86400;
-        }
-        if (diff >= 86400) { // 24 * 60 * 60
-          timeLeft.days = Math.floor(diff / 86400);
-          diff -= timeLeft.days * 86400;
-        }
-        if (diff >= 3600) { // 60 * 60
-          timeLeft.hours = Math.floor(diff / 3600);
-          diff -= timeLeft.hours * 3600;
-        }
-        if (diff >= 60) {
-          timeLeft.min = Math.floor(diff / 60);
-          diff -= timeLeft.min * 60;
-        }
-        timeLeft.sec = diff;
-    
-        return timeLeft;
-    },
-
-    stop() {
-        clearInterval(this.interval);
-    },
-    
-    addLeadingZeros(value) {
-        value = String(value);
-        while (value.length < 2) {
-          value = '0' + value;
-        }
-        return value;
     },
 
     async readFromDtbsToTable() {
-        // console.log("/contract_ico/" + contractAddress);
-        var databaseRef = firebase.database().ref("/contract_ico/" + contractAddress);
+        // console.log("71 cIDetail ",this.props.params.contracticoId);
+
+        var databaseRef = firebase.database().ref("/contract_ico/" + this.props.params.contracticoId);
         var item;
         await databaseRef.once('value', function (snapshot) {
             item = snapshot.val();
         });
+        // console.log("item ne ",item);
+
+        icoAddress = await item.address;
+        let icoInstance = new contractService.ICOContract(icoAddress);
+        let TokenIcoInstance = new contractService.TokenICOContract(item.addressOfTokenUsed);
+
+        let tokenUsedName = await TokenIcoInstance.getName();
+        // console.log("used name ",tokenUsedName);
+
+        let tokenUsedSymbol = await TokenIcoInstance.getSymbol();
+
+        let currentAccount = await icoInstance.getAccount();
+
+        let amountRemainInPre = await icoInstance.getTokenRemainInPre();
+        let amountRemain = await icoInstance.getTokenRemain();
+
+        // console.log("remain ",amountRemainInPre,amountRemain);
+        let statusClose = await icoInstance.getClosed();
+        let finalStatus;
+        if (!statusClose) {
+            finalStatus = "In Process"
+        }
+        else {
+            finalStatus = await icoInstance.getSuccessStatus()
+        }
+        // let isClosed = statusClose.toString();
+        let isSuccess = finalStatus.toString();
+        let userBalance = await icoInstance.getUserBalance(currentAccount);
+
+        // console.log(isClosed, isSuccess, userBalance);
 
         this.setState({
             contractIco: item
         });
 
+        // try {
         this.setState({
             startPreOrder: this.state.contractIco.startPreOrderTime,
             endPreOrder: this.state.contractIco.endPreOrderTime,
@@ -149,13 +116,26 @@ let ContractICODetail = injectIntl(React.createClass({
             preOrderPrice: this.state.contractIco.preOrderPrice,
             orderPrice: this.state.contractIco.orderPrice,
             minimumQuantity: this.state.contractIco.minimumQuantity,
-            contractAddress: this.state.contractIco.contractAddress 
-        })
+            contractAddress: this.state.contractIco.contractAddress,
+            contractIco: item,
+            icoAddress: icoAddress,
+            icoInstance: icoInstance,
+            tokenUsedSymbol: tokenUsedSymbol,
+            tokenUsedName: tokenUsedName,
+            amountRemain: amountRemain,
+            amountRemainInPre: amountRemainInPre,
+            // isClosed: isClosed,
+            userBalance: userBalance,
+            isSuccess: isSuccess
 
-        // console.log('====================================')
-        // console.log(this.state.startPreOrder)
-        // console.log('====================================')
-        // console.log(item);
+        })
+        // } catch (err) {
+        //     this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
+        // }
+
+        // console.log(this.state.isClosed);
+
+
     },
 
     setAlert(alertLevel, alertMessage) {
@@ -191,9 +171,10 @@ let ContractICODetail = injectIntl(React.createClass({
                 <div className="panel-body">
                     <div className="container-fluid">
                         <SubWithDrawToken
-                            contractAddress={this.state.contractAddress}
+                            icoInstance={this.state.icoInstance}
+                            // contractAddress={this.state.contractAddress}
                             endOrder={this.state.endOrder}
-                            setAlert={this.setAlert} 
+                            setAlert={this.setAlert}
                             showAlert={this.showAlert} />
                     </div>
                 </div>
@@ -206,31 +187,20 @@ let ContractICODetail = injectIntl(React.createClass({
             <div className="panel panel-default">
                 <div className="panel-heading">
                     <h3 className="panel-title">
-                        <FormattedMessage id='form.checkgoal'/>
+                        <FormattedMessage id='form.checkgoal' />
                     </h3>
                 </div>
                 <div className="panel-body">
                     <div className="container-fluid">
                         <SubCheckGoal
-                            contractAddress={this.state.contractAddress}
+                            icoInstance={this.state.icoInstance}
                             endOrder={this.state.endOrder}
-                            setAlert={this.setAlert} 
+                            setAlert={this.setAlert}
                             showAlert={this.showAlert} />
                     </div>
                 </div>
             </div>
         );
-    },
-
-    async onCheckGoal(e) {
-        e.preventDefault();
-        ICO = new contractService.ICOContract(contractAddress);
-        try {
-            const account = await ICO.getAccount();
-            await ICO.checkGoalReached(account);
-          } catch (err) {
-              this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
-          }
     },
 
     buy() {
@@ -248,12 +218,13 @@ let ContractICODetail = injectIntl(React.createClass({
                             endPreOrder={this.state.endPreOrder}
                             startOrder={this.state.startOrder}
                             endOrder={this.state.endOrder}
-                            addressICO= {this.state.addressICO}
-                            preOrderPrice= {this.state.preOrderPrice}
-                            orderPrice= {this.state.orderPrice}
+                            addressICO={this.state.addressICO}
+                            preOrderPrice={this.state.preOrderPrice}
+                            orderPrice={this.state.orderPrice}
                             minimumQuantity={this.state.minimumQuantity}
                             contractAddress={this.state.contractAddress}
                             setAlert={this.setAlert}
+                            icoInstance={this.state.icoInstance}
                             showAlert={this.showAlert} />
                     </div>
                 </div>
@@ -282,103 +253,143 @@ let ContractICODetail = injectIntl(React.createClass({
                 <div className="token-wrapper panel panel-default">
                     <div className="container">
                         <div className="row">
-                            <div className="col-md-8">
+                            <div className="col-md-12">
                                 <h1>CONTRACT ICO</h1>
-                                {/* <p>Tokens for tuition fees at Duy Tan university</p> */}
-                                {/* {this.state.contractIco.map(item => {
-                                    return (
-                                        <div key={item.key} value={item}> */}
-                                <div className="row">
-                                    <div className="col-md-12">
+                                {/* ----------- Left side ----------- */}
+                                <div className="col-md-6">
+
+                                    <div className="row">
+                                         {/* ----------- token link ----------- */}
                                         <div className="panel panel-default">
                                             <div className="panel-heading">
-                                                <h3 className="panel-title">Address Of Token</h3>
+                                                <h3 className="panel-title" style={{ textAlign: 'center' }}>Token Linked</h3>
                                             </div>
-                                            <div className="panel-body">
+                                            <div className="panel-body" style={{ textAlign: 'left' }}>
                                                 <div className="container-fluid">
+                                                    <span>Name&nbsp; :&nbsp;&nbsp;&nbsp;</span>
+                                                    <span style={{ color: 'blue' }}>{this.state.tokenUsedName}</span><br></br>
+                                                    <span>Symbol&nbsp; :&nbsp;&nbsp;&nbsp;</span>
+                                                    <span style={{ color: 'blue' }}>{this.state.tokenUsedSymbol}</span><br></br>
+                                                    <span>Address &nbsp; :&nbsp;&nbsp;</span>
                                                     <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.addressOfTokenUsed}</span>
+                                                    <br></br><br></br>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {/* ----------- End token link ----------- */}
+                                    </div>
+
+                                    {/* ----------- Data static ----------- */}
+                                    <div className="row">
+                                        <div className="col-md-4">
+                                            <div className="panel panel-default">
+                                                <div className="panel-heading">
+                                                    <h3 className="panel-title" style={{ textAlign: 'center' }}>Amounts</h3>
+                                                </div>
+                                                <div className="panel-body" style={{ textAlign: 'center' }}>
+                                                    <div className="container-fluid">
+                                                        <span>S1:&nbsp;&nbsp;&nbsp;</span>
+                                                        <span style={{ color: 'blue' }}>{this.state.amountRemainInPre}</span>
+                                                        <span>&nbsp;&nbsp;&nbsp;{this.state.tokenUsedSymbol}</span> <br></br>
+                                                        <span>S2:&nbsp;&nbsp;&nbsp;</span>
+                                                        <span style={{ color: 'blue' }}>{this.state.amountRemain}</span>
+                                                        <span>&nbsp;&nbsp;&nbsp;{this.state.tokenUsedSymbol}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="panel panel-default">
+                                                <div className="panel-heading">
+                                                    <h3 className="panel-title" style={{ textAlign: 'center' }}>Balance</h3>
+                                                </div>
+                                                <div className="panel-body" style={{ textAlign: 'center' }}>
+                                                    <div className="container-fluid">
+                                                        <span style={{ textAlign: 'center', color: 'blue' }}>{this.state.userBalance} </span>
+                                                        <span>&nbsp;{this.state.tokenUsedSymbol}</span><br></br><br></br>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="panel panel-default">
+                                                <div className="panel-heading">
+                                                    <h3 className="panel-title" style={{ textAlign: 'center' }}>ICO status</h3>
+                                                </div>
+                                                <div className="panel-body" style={{ textAlign: 'center' }}>
+                                                    <div className="container-fluid">
+                                                        <span style={{ textAlign: 'center', color: 'blue' }}>{this.state.isSuccess}</span><br></br><br></br>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                    {/* ----------- End Data static ----------- */}
+
+                                   {/* ----------- Data change ----------- */}
+                                    <div className="row">
+                                        <div className="col-md-6">
+                                            <div className="panel panel-default">
+                                                <div className="panel-heading">
+                                                    <h3 className="panel-title" style={{ textAlign: 'center' }}>Price</h3>
+                                                </div>
+                                                <div className="panel-body" style={{ textAlign: 'center' }}>
+                                                    <div className="container-fluid">
+                                                        <span style={{ textAlign: 'center' }}>S1: {this.state.contractIco && this.state.contractIco.preOrderPrice} ETH</span><br></br>
+                                                        <span style={{ textAlign: 'center' }}>S2: {this.state.contractIco && this.state.contractIco.orderPrice} ETH</span><br></br>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="col-md-6">
+                                            <div className="panel panel-default">
+                                                <div className="panel-heading">
+                                                    <h3 className="panel-title" style={{ textAlign: 'center' }}>Minimum</h3>
+                                                </div>
+                                                <div className="panel-body" style={{ textAlign: 'center' }}>
+                                                    <div className="container-fluid">
+                                                        <span style={{ textAlign: 'center' }}>{this.state.contractIco && this.state.contractIco.minimumQuantity} {this.state.tokenUsedSymbol}</span><br></br><br></br>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> 
+                                    {/* ----------- End data change ----------- */}
+
                                 </div>
-                                <div className="row">
-                                    <div className="col-md-3">
-                                        <div className="panel panel-default">
-                                            <div className="panel-heading">
-                                                <h3 className="panel-title" style={{ fontSize: '12px', textAlign: 'center' }}>Amounts</h3>
-                                            </div>
-                                            <div className="panel-body">
-                                                <div className="container-fluid">
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.preOrderAmount}</span> <br></br>
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.orderAmount}</span>
+                                {/* ----------- End Left side ----------- */}
+
+
+
+                                {/* ----------- Right side ----------- */}
+
+                                    {/* ----------- Time stage ----------- */}
+                                    <div className="col-md-6">
+                                            <div className="panel panel-default">
+                                                <div className="panel-heading">
+                                                    <h3 className="panel-title" style={{ textAlign: 'center' }}>Time line</h3>
+                                                </div>
+                                                <div className="panel-body" style={{ textAlign: 'center' }}>
+                                                    <div className="container-fluid">
+                                                        <span style={{ color: 'blue' }}>Stage 1: {this.state.contractIco && this.state.contractIco.startPreOrderTime}</span><br></br>
+                                                        <span style={{ color: 'blue' }}>Stage 2: {this.state.contractIco && this.state.contractIco.endPreOrderTime}</span><br></br>
+                                                        <span style={{ color: 'blue' }}>Stage 3: {this.state.contractIco && this.state.contractIco.startOrderTime}</span><br></br>
+                                                        <span style={{ color: 'blue' }}>Stage 4: {this.state.contractIco && this.state.contractIco.endOrderTime}</span><br></br>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
                                     </div>
-                                    <div className="col-md-5">
-                                        <div className="panel panel-default">
-                                            <div className="panel-heading">
-                                                <h3 className="panel-title" style={{ fontSize: '12px', textAlign: 'center' }}>Time line</h3>
-                                            </div>
-                                            <div className="panel-body">
-                                                <div className="container-fluid">
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.startPreOrderTime}</span><br></br>
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.endPreOrderTime}</span><br></br>
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.startOrderTime}</span><br></br>
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.endOrderTime}</span><br></br>
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.addLeadingZeros(this.state.contractIco.endOrderTime.days)}</span><br></br>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-2">
-                                        <div className="panel panel-default">
-                                            <div className="panel-heading">
-                                                <h3 className="panel-title" style={{ fontSize: '12px', textAlign: 'center' }}>Price</h3>
-                                            </div>
-                                            <div className="panel-body">
-                                                <div className="container-fluid">
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.preOrderPrice}</span><br></br>
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.orderPrice}</span><br></br>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-2">
-                                        <div className="panel panel-default">
-                                            <div className="panel-heading">
-                                                <h3 className="panel-title" style={{ fontSize: '12px', textAlign: 'center' }}>Minimum</h3>
-                                            </div>
-                                            <div className="panel-body">
-                                                <div className="container-fluid">
-                                                    <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.minimumQuantity}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* <div className="col-sm-4">
-                                    <button
-                                        type="submit"
-                                        className="button-request"
-                                        onClick={this.readFromDtbsToTable}>
-                                        Deploy contract ICO
-                                    </button>
-                                </div> */}
-                                {/* </div>
-                                    )
-                                })} */}
+                                    {/* ----------- end Time stage ----------- */}
+                                
+                                {/* ----------- End right side ----------- */}
+                            
                             </div>
-                            <div className="col-md-4">
-                                <h2>Description</h2>
-                                {/* <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.owner}</span> */}
-                                <br />
-                                <small>This contract is used for ICO
-                                </small>
-                                {this.notification(this.state.currentState)}
-                            </div>
+
                         </div>
+
+
+                        
                         <hr />
                         <div className="row">
                             <AlertDismissable ref="alerts" level={this.state.alertLevel} message={this.state.alertMessage} />
