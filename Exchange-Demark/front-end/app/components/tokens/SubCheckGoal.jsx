@@ -1,6 +1,6 @@
 import React from 'react';
 import {injectIntl, FormattedMessage} from 'react-intl';
-import {Button, Input} from 'react-bootstrap';
+import {Button} from 'react-bootstrap';
 
 import ConfirmModal from '../ConfirmModal';
 

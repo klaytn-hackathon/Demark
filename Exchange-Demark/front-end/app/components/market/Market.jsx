@@ -1,10 +1,18 @@
-import React from 'react';
-import { Table, Card, Button } from 'react-bootstrap';
+import React, { PropTypes, Component } from 'react';
+
+import { Table } from 'react-bootstrap';
 import firebase from 'firebase';
 
 import { Link } from 'react-router';
 
-class Market extends React.Component {
+// import DateCountdown from 'react-date-countdown-timer';
+//import all the component we need in our project
+import CountDown from 'react-native-countdown-component';
+//import CountDown to show the timer
+import moment from 'moment';
+//import moment to help you play with date and time
+
+class Market extends Component {
 
     constructor(props) {
         super(props);
@@ -14,8 +22,18 @@ class Market extends React.Component {
 
         this.state = {
             tokens: [],
-            ico: []
-        }
+            ico: [],
+            totalDuration: '',
+            days: 0,
+            hours: 0,
+            min: 0,
+            sec: 0
+        };
+        this.timer = 0;
+        this.startTimer = this.startTimer.bind(this);
+        this.countDown = this.countDown.bind(this);
+        // this.onCountDown = this.onCountDown.bind(this);
+        
     }
 
     componentWillMount() {
@@ -23,10 +41,86 @@ class Market extends React.Component {
         require("../../css/main.less");
     }
 
-
     componentDidMount() {
         this.readFromDtbsToTable();
         this.readIcoFromDtbs();
+        let timeLeftVar = this.secondsToTime(this.state.seconds);
+        this.setState({ time: timeLeftVar });
+        this.interval = setInterval(() => {
+            const date = this.calculateCountdown(this.props.date);
+            date ? this.setState(date) : this.stop();
+          }, 1000);
+          var that = this;
+          var date = moment()
+          .utcOffset('+05:30')
+          .format('YYYY-MM-DD hh:mm');
+          var expirydate = '2018-08-23 04:00:45';
+          var diffr = moment.duration(moment(expirydate).diff(moment(date)));
+          //difference of the expiry date-time given and current date-time
+          var hours = parseInt(diffr.asHours());
+          var minutes = parseInt(diffr.minutes());
+          var seconds = parseInt(diffr.seconds());
+          var d = hours * 60 * 60 + minutes * 60 + seconds;
+          //converting in seconds
+          that.setState({ totalDuration: d });
+    }
+
+    componentWillUnmount() {
+        this.stop();
+    }
+
+    // letCountDown(expirydate) {
+        
+    //     //Settign up the duration of countdown in seconds to re-render
+    // }
+
+    calculateCountdown(endDate) {
+        let diff = (Date.parse(new Date(endDate)) - Date.parse(new Date())) / 1000;
+    
+        // clear countdown when date is reached
+        if (diff <= 0) return false;
+    
+        const timeLeft = {
+          years: 0,
+          days: 0,
+          hours: 0,
+          min: 0,
+          sec: 0,
+          millisec: 0
+        };
+    
+        // calculate time difference between now and expected date
+        if (diff >= (365.25 * 86400)) { // 365.25 * 24 * 60 * 60
+          timeLeft.years = Math.floor(diff / (365.25 * 86400));
+          diff -= timeLeft.years * 365.25 * 86400;
+        }
+        if (diff >= 86400) { // 24 * 60 * 60
+          timeLeft.days = Math.floor(diff / 86400);
+          diff -= timeLeft.days * 86400;
+        }
+        if (diff >= 3600) { // 60 * 60
+          timeLeft.hours = Math.floor(diff / 3600);
+          diff -= timeLeft.hours * 3600;
+        }
+        if (diff >= 60) {
+          timeLeft.min = Math.floor(diff / 60);
+          diff -= timeLeft.min * 60;
+        }
+        timeLeft.sec = diff;
+    
+        return timeLeft;
+    }
+
+    stop() {
+        clearInterval(this.interval);
+    }
+    
+    addLeadingZeros(value) {
+        value = String(value);
+        while (value.length < 2) {
+          value = '0' + value;
+        }
+        return value;
     }
 
     readFromDtbsToTable() {
@@ -70,6 +164,7 @@ class Market extends React.Component {
     }
 
     render() {
+        console.log(this.state.totalDuration);
         return (
             <div>
                 {/* List of Token ICO */}
@@ -149,7 +244,21 @@ class Market extends React.Component {
                                                     {item.preOrderAmount} <br></br>
                                                     {item.orderAmount}
                                                 </td>
-                                                <td className="style-row">{item.endOrderTime}</td>
+                                                <td className="style-row">
+                                                    {item.endOrderTime}
+                                                    <CountDown
+                                                        until={this.state.totalDuration}
+                                                        //duration of countdown in seconds
+                                                        timetoShow={('H', 'M', 'S')}
+                                                        //formate to show
+                                                        onFinish={() => alert('ICO Done')}
+                                                        //on Finish call
+                                                        onPress={() => alert('ICO start')}
+                                                        //on Press call
+                                                        size={20}
+                                                        />
+                                                    {/* {this.onCountDown(item.endOrderTime)} */}
+                                                </td>
                                                 <td className="style-row">{item.addressOfTokenUsed}</td>
                                             </tr>
                                         )
@@ -215,6 +324,14 @@ class Market extends React.Component {
         );
     }
 }
+
+Market.propTypes = {
+    date: PropTypes.string.isRequired
+  };
+  
+Market.defaultProps = {
+    date: new Date()
+};
 
 
 module.exports = Market;
