@@ -109,6 +109,7 @@ let UserDetails = React.createClass({
     this.setState({
       icoToken: icoTokenData
     });
+
   },
 
   render() {

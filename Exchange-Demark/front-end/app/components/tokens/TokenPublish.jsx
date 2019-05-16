@@ -1,25 +1,14 @@
+import _ from 'lodash';
 import React from 'react'
 import { injectIntl, FormattedMessage } from 'react-intl'
 import firebase from 'firebase'
 import web3 from '../../clients/web3'
-import {Dropdown} from 'react-bootstrap';
+import {DropdownButton, MenuItem} from 'react-bootstrap';
 
 
-let currentAccount
-
-import readTokenByteCode from './readbytecode.js'
-import { Alert } from 'react-bootstrap';
-
-let addressDemark = '0xA75B2d7b277919c224B198743C88EfE608BA8c1e'
-
-let contractICOInstance = web3.eth.contract(
-  readTokenByteCode.getAbiContractICO()
-)
-let tokenICOInstance = web3.eth.contract(readTokenByteCode.getAbiTokenICO())
-
-let contractICOBytecode = readTokenByteCode.getBytecodeContractICO()
-let tokenICOBytecode = readTokenByteCode.getBytecodeTokenICO()
-
+let currentAccount;
+// let icoTokenData = [];
+let addressDemark = '0xA75B2d7b277919c224B198743C88EfE608BA8c1e';
 
 let TokenPublish = injectIntl(
   React.createClass({
@@ -45,7 +34,9 @@ let TokenPublish = injectIntl(
         totalSupply: null,
         // currentAccount: null
 
-        deployFee: 2000000000000000000
+        deployFee: 2000000000000000000,
+
+        itemsAddress: [] 
       }
     },
 
@@ -58,7 +49,7 @@ let TokenPublish = injectIntl(
       if (window.web3 && window.web3.currentProvider.isMetaMask) {
         window.web3.eth.getAccounts((error, accounts) => {
           currentAccount = accounts[0]
-          console.log(currentAccount)
+          // console.log(currentAccount)
           // Do whatever you need to.
           //this.setState({currentAccount: accounts[0]});
         })
@@ -66,6 +57,18 @@ let TokenPublish = injectIntl(
         console.log('MetaMask account not detected :(')
       }
       //------------------------------------
+      this.readFromDtbsIcoToken();
+    },
+
+    componentWillReceiveProps(nextProps) {
+      var items = _.compact(this.state.itemsAddress.map(function(item) {
+        return <MenuItem key={item.id} eventKey={item.id}>{item.address}</MenuItem>;
+      }.bind(this)));
+  
+      this.setState({
+        itemsAddress: items
+        // market: nextProps.market.market.name || '-'
+      });
     },
 
     returnDatesFromconvertTimeOrderToInt() {
@@ -112,6 +115,14 @@ let TokenPublish = injectIntl(
       })
     },
 
+    handleChangeItem(e, key) {
+      e.preventDefault()
+      var index = _.findIndex(this.state.itemsAddress, {'id': key});
+      this.setState({
+        addressOfTokenUsed: this.state.itemsAddress[index].address
+      })
+      // this.props.flux.actions.market.switchMarket(this.props.market.markets[index]);
+    },
     //  validate for form
     validate: function (e, showAlerts) {
       e.preventDefault()
@@ -172,6 +183,28 @@ let TokenPublish = injectIntl(
       if (showAlerts) this.props.showAlert(true)
 
       e.stopPropagation()
+    },
+
+    async readFromDtbsIcoToken() {
+      var databaseRef = firebase.database().ref("/tokens_ico/");
+      let icoTokenData = [];
+      await databaseRef.once('value', function (snapshot) {
+        snapshot.forEach(function (childSnapshot) {
+          var item = childSnapshot.val();
+          item.key = childSnapshot.key;
+          if (item.approve == true && item.owner == currentAccount) {
+            icoTokenData.push(item); 
+          }
+        });
+      });
+
+      this.setState({
+        itemsAddress: icoTokenData
+      });
+      
+      console.log('====================================')
+      console.log("186 ICO address", this.state.itemsAddress)
+      console.log('====================================')
     },
 
     onSubmitContractICODeploy(e) {
@@ -648,7 +681,18 @@ let TokenPublish = injectIntl(
                           <b>Address</b>
                         </label>
                       </div>
-                      <div className="col-sm-4">
+                      <div className="col-sm-4" >
+                        {/* <DropdownButton bsSize="md"
+                          id="market-sm-dropdown dropdown-basic-Primary"
+                          ref="market-sm"
+                          onSelect={this.handleChangeItem}
+                          title="0xA75B2d7b277919c224B198743C88EfE608BA8c1e"
+                          className="top-btn-xs"
+                          style={{ width: '400px', textAlign: 'center'}}
+                          pullRight>
+                            {this.state.itemsAddress}
+                        </DropdownButton> */}
+                        {/* <br /> <br /> */}
                         <input
                           type="text"
                           placeholder="Address"

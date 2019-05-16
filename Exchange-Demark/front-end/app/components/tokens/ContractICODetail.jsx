@@ -129,13 +129,6 @@ let ContractICODetail = injectIntl(React.createClass({
             isSuccess: isSuccess
 
         })
-        // } catch (err) {
-        //     this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });
-        // }
-
-        // console.log(this.state.isClosed);
-
-
     },
 
     setAlert(alertLevel, alertMessage) {
@@ -256,7 +249,7 @@ let ContractICODetail = injectIntl(React.createClass({
                             <div className="col-md-12">
                                 <h1>CONTRACT ICO</h1>
                                 {/* ----------- Left side ----------- */}
-                                <div className="col-md-6">
+                                <div className="col-md-8">
 
                                     <div className="row">
                                          {/* ----------- token link ----------- */}
@@ -365,7 +358,7 @@ let ContractICODetail = injectIntl(React.createClass({
                                 {/* ----------- Right side ----------- */}
 
                                     {/* ----------- Time stage ----------- */}
-                                    <div className="col-md-6">
+                                    <div className="col-md-4">
                                             <div className="panel panel-default">
                                                 <div className="panel-heading">
                                                     <h3 className="panel-title" style={{ textAlign: 'center' }}>Time line</h3>
