@@ -3,7 +3,7 @@ import React from 'react'
 import { injectIntl, FormattedMessage } from 'react-intl'
 import firebase from 'firebase'
 import web3 from '../../clients/web3'
-import {DropdownButton, MenuItem} from 'react-bootstrap';
+import { MenuItem } from 'react-bootstrap';
 
 
 let currentAccount;
