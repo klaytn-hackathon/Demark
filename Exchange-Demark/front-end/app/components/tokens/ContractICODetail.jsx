@@ -8,11 +8,13 @@ import AlertDismissable from '../AlertDismissable';
 import SubBuyToken from './SubBuyToken';
 import SubWithDrawToken from './SubWithDrawToken';
 import SubCheckGoal from './SubCheckGoal';
+import Countdown from './Countdown';
 
 import firebase from 'firebase';
 
 let contractAddress;
 
+let today = new Date().getTime()
 
 import contractService from '../../clients/contractService';
 // import { log } from 'util';
@@ -50,7 +52,8 @@ let ContractICODetail = injectIntl(React.createClass({
             isSuccess: '',
             userBalance: '',
             amountRemainInPre: '',
-            amountRemain: ''
+            amountRemain: '',
+            // isSuccess:''
         };
     },
 
@@ -64,48 +67,46 @@ let ContractICODetail = injectIntl(React.createClass({
     },
 
     async readFromDtbsToTable() {
-        // console.log("71 cIDetail ",this.props.params.contracticoId);
 
         var databaseRef = firebase.database().ref("/contract_ico/" + this.props.params.contracticoId);
         var item;
         await databaseRef.once('value', function (snapshot) {
             item = snapshot.val();
         });
-        // console.log("item ne ",item);
 
         icoAddress = await item.address;
         let icoInstance = new contractService.ICOContract(icoAddress);
         let TokenIcoInstance = new contractService.TokenICOContract(item.addressOfTokenUsed);
 
         let tokenUsedName = await TokenIcoInstance.getName();
-        // console.log("used name ",tokenUsedName);
-
         let tokenUsedSymbol = await TokenIcoInstance.getSymbol();
-
         let currentAccount = await icoInstance.getAccount();
-
         let amountRemainInPre = await icoInstance.getTokenRemainInPre();
         let amountRemain = await icoInstance.getTokenRemain();
 
-        // console.log("remain ",amountRemainInPre,amountRemain);
         let statusClose = await icoInstance.getClosed();
         let finalStatus;
+        let isSuccess;
         if (!statusClose) {
-            finalStatus = "In Process"
+            isSuccess = "In Process"
         }
         else {
             finalStatus = await icoInstance.getSuccessStatus()
         }
-        // let isClosed = statusClose.toString();
-        let isSuccess = finalStatus.toString();
+        // console.log("aaaa ",finalStatus);
+        
+        
+        if(finalStatus) isSuccess = "Success";
+        else isSuccess = "Fail";
         let userBalance = await icoInstance.getUserBalance(currentAccount);
 
-        // console.log(isClosed, isSuccess, userBalance);
-
+        
+        
         this.setState({
             contractIco: item
         });
-
+        // let me = new Date(item.startPreOrderTime).get
+        // console.log("ga ha",me);
         // try {
         this.setState({
             startPreOrder: this.state.contractIco.startPreOrderTime,
@@ -127,7 +128,6 @@ let ContractICODetail = injectIntl(React.createClass({
             // isClosed: isClosed,
             userBalance: userBalance,
             isSuccess: isSuccess
-
         })
     },
 
@@ -265,14 +265,14 @@ let ContractICODetail = injectIntl(React.createClass({
                                                     <span style={{ color: 'blue' }}>{this.state.tokenUsedSymbol}</span><br></br>
                                                     <span>Address &nbsp; :&nbsp;&nbsp;</span>
                                                     <span style={{ color: 'blue' }}>{this.state.contractIco && this.state.contractIco.addressOfTokenUsed}</span>
-                                                    <br></br><br></br>
+                                                    <br></br><br></br><br></br>
                                                 </div>
                                             </div>
                                         </div>
                                         {/* ----------- End token link ----------- */}
                                     </div>
 
-                                    {/* ----------- Data static ----------- */}
+                                    {/* ----------- Data change ----------- */}
                                     <div className="row">
                                         <div className="col-md-4">
                                             <div className="panel panel-default">
@@ -317,9 +317,9 @@ let ContractICODetail = injectIntl(React.createClass({
                                             </div>
                                         </div>
                                     </div>
-                                    {/* ----------- End Data static ----------- */}
+                                    {/* ----------- End Data change ----------- */}
 
-                                   {/* ----------- Data change ----------- */}
+                                   {/* ----------- Data static ----------- */}
                                     <div className="row">
                                         <div className="col-md-6">
                                             <div className="panel panel-default">
@@ -348,7 +348,7 @@ let ContractICODetail = injectIntl(React.createClass({
                                             </div>
                                         </div>
                                     </div> 
-                                    {/* ----------- End data change ----------- */}
+                                    {/* ----------- End data static ----------- */}
 
                                 </div>
                                 {/* ----------- End Left side ----------- */}
@@ -365,13 +365,19 @@ let ContractICODetail = injectIntl(React.createClass({
                                                 </div>
                                                 <div className="panel-body" style={{ textAlign: 'center' }}>
                                                     <div className="container-fluid">
-                                                        <span style={{ color: 'blue' }}>Stage 1: {this.state.contractIco && this.state.contractIco.startPreOrderTime}</span><br></br>
-                                                        <span style={{ color: 'blue' }}>Stage 2: {this.state.contractIco && this.state.contractIco.endPreOrderTime}</span><br></br>
-                                                        <span style={{ color: 'blue' }}>Stage 3: {this.state.contractIco && this.state.contractIco.startOrderTime}</span><br></br>
-                                                        <span style={{ color: 'blue' }}>Stage 4: {this.state.contractIco && this.state.contractIco.endOrderTime}</span><br></br>
+                                                        <h5 style={{ color: 'red' }}>Stage 1</h5>
+                                                         <Countdown date={`${this.state.contractIco && this.state.contractIco.startPreOrderTime}`} />
+                                                        <h5 style={{ color: 'red' }}>Close stage 1</h5>
+                                                        <Countdown date={`${this.state.contractIco && this.state.contractIco.endPreOrderTime}`} /><hr/>
+                                                        <h5 style={{ color: 'red' }}>Stage 2</h5>
+                                                        <Countdown date={`${this.state.contractIco && this.state.contractIco.startOrderTime}`} />
+                                                        <h5 style={{ color: 'red' }}>Close stage 2</h5>
+                                                        <Countdown date={`${this.state.contractIco && this.state.contractIco.endOrderTime}`} />
                                                     </div>
                                                 </div>
                                             </div>
+
+                            
                                     </div>
                                     {/* ----------- end Time stage ----------- */}
                                 
