@@ -2,11 +2,7 @@ import React from 'react';
 import {injectIntl, FormattedMessage} from 'react-intl';
 import {Button} from 'react-bootstrap';
 
-import DTUContract from '../clients/contractService';
-
-const contractAddress = "0x9541ee8a0d873055b1951037db437374c1999323";
-
-let DTU = new DTUContract(contractAddress);
+import contractService from '../clients/contractService';
 
 let SubReward = injectIntl(React.createClass({
 
@@ -29,9 +25,9 @@ let SubReward = injectIntl(React.createClass({
     e.preventDefault();
 
     try {
-      let currentAcc = await DTU.getAccount();
+      let accounts = await this.props.dtuInstance.getAccount();
 
-      await DTU.reward(currentAcc);
+      await this.props.dtuInstance.reward(accounts);
 
     } catch (err) {
         this.setState({ errorMessage: "Oops! " + err.message.split("\n")[0] });

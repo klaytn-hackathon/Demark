@@ -46,7 +46,7 @@ let Chat = React.createClass({
       this.setState({
         showModal: true,
         modalMessage: <p>
-          Whisper is not enabled on this node. Start <samp>geth</samp> with: <pre>--shh --rpcapi "db,eth,net,web3,shh"</pre>
+          DemarkChat is not enabled on this node. Start <samp>geth</samp> with: <pre>--shh --rpcapi "db,eth,net,web3,shh"</pre>
         </p>
       });
     this.setState({
@@ -59,11 +59,11 @@ let Chat = React.createClass({
       <div className={ (this.state.activeKey ? "col-xs-4" : "col-xs-2") + " chatbox"}>
         <Accordion activeKey={this.state.activeKey} onSelect={this.toggleActive}>
           <Panel header={
-              <span>{ this.props.market.name } Whisper
+              <span>Demark Bot
                 { this.state.activeKey && <span className="pull-right"><Glyphicon glyph="remove" onClick={this.toggleActive} /></span> }
               </span>
             } bsStyle="primary" eventKey="1">
-            <Well bsSize="small" className="chatbox-messages">
+            {/* <Well bsSize="small" className="chatbox-messages">
               { this.state.messages.map( function(message, i) {
                   if (!message.error)
                     return (
@@ -74,13 +74,21 @@ let Chat = React.createClass({
                     );
                 })
               }
-            </Well>
-            <form className="form-horizontal" onSubmit={this.handleSend}>
+            </Well> */}
+            {/* <form className="form-horizontal" onSubmit={this.handleSend}>
               <div className="container-fluid">
                 <Input type="text" ref="message" value={ this.state.message || "" } onChange={this.handleChange} />
               </div>
               <Button type="submit" bsStyle="primary" className="hidden pull-right">Send</Button>
-            </form>
+            </form> */}
+            <iframe
+              allow="microphone;"
+              position="relative"
+              right="-50px"
+              height="400px"
+              width="390px"
+              src="https://console.dialogflow.com/api-client/demo/embedded/db99942a-42aa-4da0-bd57-f866302f5d40">
+            </iframe>
           </Panel>
         </Accordion>
 

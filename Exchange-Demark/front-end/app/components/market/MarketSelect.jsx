@@ -32,7 +32,7 @@ let MarketSelect = React.createClass({
     return (
       <div>
         <span className="visible-xs">
-          <DropdownButton bsSize="small"
+          {/* <DropdownButton bsSize="small"
             id="market-sm-dropdown dropdown-basic-Primary"
             ref="market-sm"
             onSelect={this.handleChange}
@@ -40,7 +40,7 @@ let MarketSelect = React.createClass({
             className="top-btn-xs"
             pullRight >
               { this.state.items }
-          </DropdownButton>
+          </DropdownButton> */}
         </span>
         <span className="hidden-xs">
           {/* <DropdownButton
