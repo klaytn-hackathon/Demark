@@ -73,7 +73,7 @@
     "axios": "^0.18.0",
     "babel-polyfill": "^6.26.0",
     "big-rational": "^0.10.5",
-    "bootstrap": "^3.3.6",
+    "bootstrap": "^3.4.1",
     "bootswatch": "^3.3.6",
     "browser-solc": "^1.0.0",
     "btc-swap": "etherex/btc-swap",
