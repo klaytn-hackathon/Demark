@@ -80,7 +80,7 @@
     "contract-support": "^1.0.8",
     "d3": "^3.5.16",
     "firebase": "^5.11.1",
-    "flat": "^2.0.0",
+    "flat": "^5.0.1",
     "fluxxor": "^1.7.3",
     "fs": "0.0.1-security",
     "history": "^2.0.1",
